@@ -1,0 +1,13 @@
+{
+  "name": "a3_computacao_grafica",
+  "version": "1.0.0",
+  "description": "Sistema Gráfico de Imagens 2D",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "electron": "^45.2.1"
+  }
+}

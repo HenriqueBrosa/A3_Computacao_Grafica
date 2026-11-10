@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; img-src 'self' blob: data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'">
+    <title>Editor Gráfico 2D</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true">▦</span>
+            <h1>Editor Gráfico 2D</h1>
+        </div>
+        <nav class="file-actions" aria-label="Ações do documento">
+            <button id="new-canvas-button" class="button secondary" type="button">Nova tela</button>
+            <button id="import-image-button" class="button secondary" type="button">Importar imagem</button>
+            <button id="export-button" class="button primary" type="button">Exportar PNG</button>
+            <input id="image-file-input" class="visually-hidden" type="file" accept="image/*" aria-label="Escolher imagem para importar">
+        </nav>
+    </header>
+
+    <main class="editor">
+        <aside class="toolbar panel" aria-label="Ferramentas">
+            <h2>Ferramentas</h2>
+            <div class="tool-group" role="toolbar" aria-label="Ferramentas de desenho">
+                <button class="tool-button active" data-tool="brush" type="button" aria-pressed="true" title="Desenhar pixels (B)">
+                    <span aria-hidden="true">✎</span><span>Desenhar</span>
+                </button>
+                <button class="tool-button" data-tool="eyedropper" type="button" aria-pressed="false" title="Conta-gotas (I)">
+                    <span aria-hidden="true">◉</span><span>Conta-gotas</span>
+                </button>
+                <button class="tool-button" data-tool="eraser" type="button" aria-pressed="false" title="Apagar pixels (E)">
+                    <span aria-hidden="true">▱</span><span>Borracha</span>
+                </button>
+            </div>
+
+            <div class="control-block color-control">
+                <label for="color-picker">Cor do traço</label>
+                <div class="color-row">
+                    <input id="color-picker" type="color" value="#3b82f6" aria-label="Escolher cor personalizada">
+                    <output id="color-value" for="color-picker">#3B82F6</output>
+                </div>
+            </div>
+
+            <div class="control-block">
+                <label for="brush-size">Tamanho do pincel <output id="brush-size-value">1 px</output></label>
+                <input id="brush-size" type="range" min="1" max="32" value="1">
+            </div>
+            <p class="hint">Atalhos: B desenhar, I conta-gotas, E borracha.</p>
+        </aside>
+
+        <section class="workspace" aria-label="Área de edição">
+            <div class="canvas-frame">
+                <canvas id="imageCanvas" width="800" height="500" aria-label="Tela de desenho 800 por 500 pixels" tabindex="0"></canvas>
+            </div>
+            <div class="canvas-status">
+                <span id="canvas-size">800 × 500 px</span>
+                <span id="active-tool-status">Ferramenta: Desenhar</span>
+            </div>
+        </section>
+
+        <aside class="properties panel" aria-label="Propriedades e camadas">
+            <section class="layer-section">
+                <div class="section-heading">
+                    <h2>Camadas</h2>
+                    <div class="compact-actions">
+                        <button id="add-layer-button" class="icon-button" type="button" title="Adicionar camada" aria-label="Adicionar camada">+</button>
+                        <button id="delete-layer-button" class="icon-button danger" type="button" title="Excluir camada selecionada" aria-label="Excluir camada selecionada">×</button>
+                    </div>
+                </div>
+                <p class="helper-text">Clique no nome para editar. Use as setas para organizar.</p>
+                <ul id="layers" class="layer-list" aria-label="Lista de camadas"></ul>
+            </section>
+
+            <section class="filter-section">
+                <div class="section-heading"><h2>Propriedades</h2></div>
+                <p id="selected-layer-name" class="selected-layer-name">Camada 1</p>
+                <div class="filter-control">
+                    <label for="opacity-filter">Opacidade <output id="opacity-value">100%</output></label>
+                    <input id="opacity-filter" data-filter="opacity" type="range" min="0" max="100" value="100">
+                </div>
+                <div class="filter-control">
+                    <label for="brightness-filter">Brilho <output id="brightness-value">100%</output></label>
+                    <input id="brightness-filter" data-filter="brightness" type="range" min="0" max="200" value="100">
+                </div>
+                <div class="filter-control">
+                    <label for="contrast-filter">Contraste <output id="contrast-value">100%</output></label>
+                    <input id="contrast-filter" data-filter="contrast" type="range" min="0" max="200" value="100">
+                </div>
+                <div class="filter-control">
+                    <label for="saturation-filter">Saturação <output id="saturation-value">100%</output></label>
+                    <input id="saturation-filter" data-filter="saturation" type="range" min="0" max="200" value="100">
+                </div>
+            </section>
+        </aside>
+    </main>
+
+    <script src="js/core/document.js" defer></script>
+    <script src="js/core/renderer.js" defer></script>
+    <script src="js/tools/pixel-line.js" defer></script>
+    <script src="js/io/image-io.js" defer></script>
+    <script src="js/app.js" defer></script>
+</body>
+</html>
