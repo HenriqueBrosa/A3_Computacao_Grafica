@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; img-src 'self' blob: data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' blob: data:; img-src 'self' blob: data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'">
     <title>Editor Gráfico 2D</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <header class="topbar">
         <div class="brand">
@@ -17,7 +20,8 @@
             <button id="new-canvas-button" class="button secondary" type="button">Nova tela</button>
             <button id="import-image-button" class="button secondary" type="button">Importar imagem</button>
             <button id="export-button" class="button primary" type="button">Exportar PNG</button>
-            <input id="image-file-input" class="visually-hidden" type="file" accept="image/*" aria-label="Escolher imagem para importar">
+            <input id="image-file-input" class="visually-hidden" type="file" accept="image/*"
+                aria-label="Escolher imagem para importar">
         </nav>
     </header>
 
@@ -25,13 +29,16 @@
         <aside class="toolbar panel" aria-label="Ferramentas">
             <h2>Ferramentas</h2>
             <div class="tool-group" role="toolbar" aria-label="Ferramentas de desenho">
-                <button class="tool-button active" data-tool="brush" type="button" aria-pressed="true" title="Desenhar pixels (B)">
+                <button class="tool-button active" data-tool="brush" type="button" aria-pressed="true"
+                    title="Desenhar pixels (B)">
                     <span aria-hidden="true">✎</span><span>Desenhar</span>
                 </button>
-                <button class="tool-button" data-tool="eyedropper" type="button" aria-pressed="false" title="Conta-gotas (I)">
+                <button class="tool-button" data-tool="eyedropper" type="button" aria-pressed="false"
+                    title="Conta-gotas (I)">
                     <span aria-hidden="true">◉</span><span>Conta-gotas</span>
                 </button>
-                <button class="tool-button" data-tool="eraser" type="button" aria-pressed="false" title="Apagar pixels (E)">
+                <button class="tool-button" data-tool="eraser" type="button" aria-pressed="false"
+                    title="Apagar pixels (E)">
                     <span aria-hidden="true">▱</span><span>Borracha</span>
                 </button>
             </div>
@@ -53,7 +60,10 @@
 
         <section class="workspace" aria-label="Área de edição">
             <div class="canvas-frame">
-                <canvas id="imageCanvas" width="800" height="500" aria-label="Tela de desenho 800 por 500 pixels" tabindex="0"></canvas>
+                <canvas id="imageCanvas" width="800" height="500" aria-label="Tela de desenho 800 por 500 pixels"
+                    tabindex="0"></canvas>
+
+                <div id="brush-cursor" class="brush-cursor" aria-hidden="true" hidden></div>
             </div>
             <div class="canvas-status">
                 <span id="canvas-size">800 × 500 px</span>
@@ -66,8 +76,10 @@
                 <div class="section-heading">
                     <h2>Camadas</h2>
                     <div class="compact-actions">
-                        <button id="add-layer-button" class="icon-button" type="button" title="Adicionar camada" aria-label="Adicionar camada">+</button>
-                        <button id="delete-layer-button" class="icon-button danger" type="button" title="Excluir camada selecionada" aria-label="Excluir camada selecionada">×</button>
+                        <button id="add-layer-button" class="icon-button" type="button" title="Adicionar camada"
+                            aria-label="Adicionar camada">+</button>
+                        <button id="delete-layer-button" class="icon-button danger" type="button"
+                            title="Excluir camada selecionada" aria-label="Excluir camada selecionada">×</button>
                     </div>
                 </div>
                 <p class="helper-text">Clique no nome para editar. Use as setas para organizar.</p>
@@ -75,7 +87,9 @@
             </section>
 
             <section class="filter-section">
-                <div class="section-heading"><h2>Propriedades</h2></div>
+                <div class="section-heading">
+                    <h2>Propriedades</h2>
+                </div>
                 <p id="selected-layer-name" class="selected-layer-name">Camada 1</p>
                 <div class="filter-control">
                     <label for="opacity-filter">Opacidade <output id="opacity-value">100%</output></label>
@@ -97,10 +111,50 @@
         </aside>
     </main>
 
+    <!-- Janela de criação de uma nova tela -->
+    <dialog id="new-canvas-dialog" class="new-canvas-dialog">
+        <form id="new-canvas-form" class="new-canvas-form">
+
+            <h2>Criar nova tela</h2>
+
+            <p>Defina as dimensões da nova área de desenho.</p>
+
+            <div class="new-canvas-fields">
+                <div>
+                    <label for="new-canvas-width">Largura (pixels)</label>
+                    <input id="new-canvas-width" type="number" min="1" max="8192" step="1" value="800" required>
+                </div>
+
+                <div>
+                    <label for="new-canvas-height">Altura (pixels)</label>
+                    <input id="new-canvas-height" type="number" min="1" max="8192" step="1" value="500" required>
+                </div>
+            </div>
+
+            <p class="new-canvas-warning">
+                Atenção: criar uma nova tela substituirá o conteúdo atual.
+            </p>
+
+            <p id="new-canvas-error" class="new-canvas-error" role="alert"></p>
+
+            <div class="new-canvas-actions">
+                <button id="cancel-new-canvas" class="button secondary" type="button">
+                    Cancelar
+                </button>
+
+                <button class="button primary" type="submit">
+                    Criar tela
+                </button>
+            </div>
+
+        </form>
+    </dialog>
+
     <script src="js/core/document.js" defer></script>
     <script src="js/core/renderer.js" defer></script>
     <script src="js/tools/pixel-line.js" defer></script>
     <script src="js/io/image-io.js" defer></script>
     <script src="js/app.js" defer></script>
 </body>
+
 </html>
