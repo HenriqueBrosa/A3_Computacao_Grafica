@@ -20,6 +20,7 @@
   let previousPoint = null;
   let lastPointerEvent = null;
   let brushSize = 1;
+  let opacityBrush = 1;
 
   function updateCanvasDimensions() {
     canvas.width = model.width;
@@ -244,6 +245,7 @@
       context.restore();
     } else {
       context.fillStyle = colorPicker.value;
+      context.globalAlpha = (Number(document.getElementById('opacity-brush').value)/100);
       points.forEach(({ x, y }) => context.fillRect(x - offset, y - offset, size, size));
     }
     render();
@@ -317,6 +319,14 @@
   document.getElementById('brush-size').addEventListener('input', (event) => {
     brushSize = Number(event.target.value);
     document.getElementById('brush-size-value').textContent = `${brushSize} px`;
+    if (activeTool === 'eraser' && lastPointerEvent) {
+      updateBrushCursor(lastPointerEvent);
+    }
+  });
+
+  document.getElementById('opacity-brush').addEventListener('input', (event) => {
+    opacityBrush = Number(event.target.value);
+    document.getElementById('opacity-brush-value').textContent = `${opacityBrush}%`;
     if (activeTool === 'eraser' && lastPointerEvent) {
       updateBrushCursor(lastPointerEvent);
     }
