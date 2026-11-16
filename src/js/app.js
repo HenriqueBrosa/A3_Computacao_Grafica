@@ -1,451 +1,445 @@
 (function () {
-    "use strict";
+  'use strict';
 
-    const canvas = document.getElementById("imageCanvas");
-    const canvasContext = canvas.getContext("2d");
-    const brushCursor = document.getElementById("brush-cursor");
-    const layerList = document.getElementById("layers");
-    const colorPicker = document.getElementById("color-picker");
-    const fileInput = document.getElementById("image-file-input");
-    const filterControls = Array.from(document.querySelectorAll("[data-filter]"));
-    const toolNames = {
-        brush: "Desenhar",
-        eyedropper: "Conta-gotas",
-        eraser: "Borracha",
-    };
-    let model = EditorCore.createDocument(canvas.width, canvas.height);
-    let activeTool = "brush";
-    let isDrawing = false;
-    let activePointerId = null;
-    let previousPoint = null;
-    let lastPointerEvent = null;
-    let brushSize = 1;
+  const canvas = document.getElementById('imageCanvas');
+  const canvasContext = canvas.getContext('2d');
+  const brushCursor = document.getElementById('brush-cursor');
+  const layerList = document.getElementById('layers');
+  const colorPicker = document.getElementById('color-picker');
+  const fileInput = document.getElementById('image-file-input');
+  const filterControls = Array.from(document.querySelectorAll('[data-filter]'));
+  const toolNames = {
+    brush: 'Desenhar',
+    eyedropper: 'Conta-gotas',
+    eraser: 'Borracha',
+  };
+  let model = EditorCore.createDocument(canvas.width, canvas.height);
+  let activeTool = 'brush';
+  let isDrawing = false;
+  let activePointerId = null;
+  let previousPoint = null;
+  let lastPointerEvent = null;
+  let brushSize = 1;
 
-    function updateCanvasDimensions() {
-        canvas.width = model.width;
-        canvas.height = model.height;
-        canvasContext.imageSmoothingEnabled = false;
-        canvas.setAttribute(
-            "aria-label",
-            `Tela de desenho ${model.width} por ${model.height} pixels`,
-        );
-        document.getElementById("canvas-size").textContent =
-            `${model.width} × ${model.height} px`;
-    }
+  function updateCanvasDimensions() {
+    canvas.width = model.width;
+    canvas.height = model.height;
+    canvasContext.imageSmoothingEnabled = false;
+    canvas.setAttribute('aria-label', `Tela de desenho ${model.width} por ${model.height} pixels`);
+    document.getElementById('canvas-size').textContent = `${model.width} × ${model.height} px`;
+  }
 
-    function render() {
-        EditorRenderer.renderDocument(model, canvas);
-        renderLayers();
-        renderSelectedLayerProperties();
-    }
+  function render() {
+    EditorRenderer.renderDocument(model, canvas);
+    renderLayers();
+    renderSelectedLayerProperties();
+  }
 
-    function renderLayers() {
-        layerList.replaceChildren();
-        model.layers
-            .slice()
-            .reverse()
-            .forEach((layer) => {
-                const item = document.createElement("li");
-                item.className = `layer-item${layer.id === model.selectedLayerId ? " selected" : ""}${layer.visible ? "" : " hidden-layer"}`;
-                item.dataset.layerId = layer.id;
+  function renderLayers() {
+    layerList.replaceChildren();
+    model.layers
+      .slice()
+      .reverse()
+      .forEach((layer) => {
+        const item = document.createElement('li');
+        item.className = `layer-item${layer.id === model.selectedLayerId ? ' selected' : ''}${layer.visible ? '' : ' hidden-layer'}`;
+        item.dataset.layerId = layer.id;
 
-                const visibility = document.createElement("button");
-                visibility.type = "button";
-                visibility.className = "layer-visibility";
-                visibility.textContent = layer.visible ? "◉" : "○";
-                visibility.title = layer.visible ? "Ocultar camada" : "Mostrar camada";
-                visibility.setAttribute("aria-label", visibility.title);
-                visibility.setAttribute("aria-pressed", String(layer.visible));
-                visibility.addEventListener("click", () => {
-                    model.setLayerProperty(layer.id, "visible", !layer.visible);
-                    render();
-                });
-
-                const select = document.createElement("button");
-                select.type = "button";
-                select.className = "layer-select";
-                select.textContent = layer.name;
-                select.title = `${layer.name} — clique para selecionar, duplo clique para renomear`;
-                select.addEventListener("click", () => {
-                    model.selectLayer(layer.id);
-                    render();
-                });
-                select.addEventListener("dblclick", () => {
-                    const newName = window.prompt("Nome da camada:", layer.name);
-                    if (newName !== null) {
-                        model.setLayerProperty(layer.id, "name", newName);
-                        render();
-                    }
-                });
-
-                const moveUp = document.createElement("button");
-                moveUp.type = "button";
-                moveUp.className = "layer-move";
-                moveUp.textContent = "↑";
-                moveUp.title = "Mover para cima";
-                moveUp.setAttribute("aria-label", `Mover ${layer.name} para cima`);
-                moveUp.addEventListener("click", () => {
-                    if (model.moveLayer(layer.id, 1)) render();
-                });
-
-                const moveDown = document.createElement("button");
-                moveDown.type = "button";
-                moveDown.className = "layer-move";
-                moveDown.textContent = "↓";
-                moveDown.title = "Mover para baixo";
-                moveDown.setAttribute("aria-label", `Mover ${layer.name} para baixo`);
-                moveDown.addEventListener("click", () => {
-                    if (model.moveLayer(layer.id, -1)) render();
-                });
-
-                item.append(visibility, select, moveUp, moveDown);
-                layerList.appendChild(item);
-            });
-    }
-
-    function renderSelectedLayerProperties() {
-        const layer = model.selectedLayer;
-        if (!layer) return;
-        document.getElementById("selected-layer-name").textContent = layer.name;
-        filterControls.forEach((control) => {
-            const property = control.dataset.filter;
-            control.value = layer[property];
-            document.getElementById(`${property}-value`).textContent =
-                `${layer[property]}%`;
+        const visibility = document.createElement('button');
+        visibility.type = 'button';
+        visibility.className = 'layer-visibility';
+        visibility.textContent = layer.visible ? '◉' : '○';
+        visibility.title = layer.visible ? 'Ocultar camada' : 'Mostrar camada';
+        visibility.setAttribute('aria-label', visibility.title);
+        visibility.setAttribute('aria-pressed', String(layer.visible));
+        visibility.addEventListener('click', () => {
+          model.setLayerProperty(layer.id, 'visible', !layer.visible);
+          render();
         });
-        document.getElementById("delete-layer-button").disabled =
-            model.layers.length <= 1;
-    }
 
-    function setTool(tool) {
-        activeTool = tool;
-        document.querySelectorAll("[data-tool]").forEach((button) => {
-            const selected = button.dataset.tool === tool;
-            button.classList.toggle("active", selected);
-            button.setAttribute("aria-pressed", String(selected));
+        const select = document.createElement('button');
+        select.type = 'button';
+        select.className = 'layer-select';
+        select.textContent = layer.name;
+        select.title = `${layer.name} — clique para selecionar, duplo clique para renomear`;
+        select.addEventListener('click', () => {
+          model.selectLayer(layer.id);
+
+          // Atualiza a seleção visual sem reconstruir os elementos.
+          layerList.querySelectorAll('.layer-item').forEach((element) => {
+            element.classList.toggle('selected', element.dataset.layerId === layer.id);
+          });
+
+          // Atualiza as propriedades da camada selecionada.
+          renderSelectedLayerProperties();
         });
-        canvas.classList.toggle("tool-eyedropper", tool === "eyedropper");
-        canvas.classList.toggle("tool-eraser", tool === "eraser");
-        brushCursor.hidden = tool !== "eraser";
-        if (tool === "eraser" && lastPointerEvent) {
-            updateBrushCursor(lastPointerEvent);
-        }
-        document.getElementById("active-tool-status").textContent =
-            `Ferramenta: ${toolNames[tool]}`;
+
+        const moveUp = document.createElement('button');
+        moveUp.type = 'button';
+        moveUp.className = 'layer-move';
+        moveUp.textContent = '↑';
+        moveUp.title = 'Mover para cima';
+        moveUp.setAttribute('aria-label', `Mover ${layer.name} para cima`);
+        moveUp.addEventListener('click', () => {
+          if (model.moveLayer(layer.id, 1)) render();
+        });
+
+        const moveDown = document.createElement('button');
+        moveDown.type = 'button';
+        moveDown.className = 'layer-move';
+        moveDown.textContent = '↓';
+        moveDown.title = 'Mover para baixo';
+        moveDown.setAttribute('aria-label', `Mover ${layer.name} para baixo`);
+        moveDown.addEventListener('click', () => {
+          if (model.moveLayer(layer.id, -1)) render();
+        });
+
+        item.append(visibility, select, moveUp, moveDown);
+        layerList.appendChild(item);
+      });
+  }
+
+  document.addEventListener(
+    'dblclick',
+    (event) => {
+      console.log('Duplo clique detectado:', event.target);
+    },
+    true,
+  );
+
+  // Renomear camada através de duplo clique
+  layerList.addEventListener('dblclick', (event) => {
+    const select = event.target.closest('.layer-select');
+    if (!select) return;
+
+    const item = select.closest('.layer-item');
+    if (!item) return;
+
+    const layer = model.getLayer(item.dataset.layerId);
+    if (!layer) return;
+
+    const input = document.createElement('input');
+
+    input.type = 'text';
+    input.value = layer.name;
+    input.className = 'layer-rename-input';
+    input.maxLength = 80;
+
+    select.replaceWith(input);
+
+    input.focus();
+    input.select();
+
+    function finishRename(save) {
+      if (save && input.value.trim()) {
+        model.setLayerProperty(layer.id, 'name', input.value);
+      }
+
+      render();
     }
 
-    function getCanvasPoint(event) {
-        const rect = canvas.getBoundingClientRect();
-        if (!rect.width || !rect.height) return null;
-        const x = Math.floor(
-            ((event.clientX - rect.left) * model.width) / rect.width,
-        );
-        const y = Math.floor(
-            ((event.clientY - rect.top) * model.height) / rect.height,
-        );
-        if (x < 0 || y < 0 || x >= model.width || y >= model.height) return null;
-        return { x, y };
-    }
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        finishRename(true);
+      }
 
-    function updateBrushCursor(event) {
-        lastPointerEvent = event;
-        if (activeTool !== "eraser") return;
-
-        const rect = canvas.getBoundingClientRect();
-
-        if (!rect.width || !rect.height) return;
-
-        const inside =
-            event.clientX >= rect.left &&
-            event.clientX <= rect.right &&
-            event.clientY >= rect.top &&
-            event.clientY <= rect.bottom;
-
-        if (!inside) {
-            brushCursor.hidden = true;
-            return;
-        }
-
-        // Converte o tamanho da borracha em pixels visuais da tela.
-        const diameter = (brushSize * rect.width) / model.width;
-
-        // Evita que o círculo fique pequeno demais para ser visualizado.
-        const visualDiameter = Math.max(4, diameter);
-
-        brushCursor.style.width = `${visualDiameter}px`;
-        brushCursor.style.height = `${visualDiameter}px`;
-
-        // Posiciona o círculo exatamente abaixo do ponteiro.
-        brushCursor.style.left = `${event.clientX - rect.left}px`;
-        brushCursor.style.top = `${event.clientY - rect.top}px`;
-
-        brushCursor.hidden = false;
-    }
-
-    function paintSegment(from, to) {
-        const layer = model.selectedLayer;
-        if (!layer) return;
-        const context = layer.canvas.getContext("2d");
-        const size =
-            activeTool === "brush" || activeTool === "eraser" ? brushSize : 1;
-        const offset = Math.floor((size - 1) / 2);
-        const points = EditorPixelLine.getLinePoints(from.x, from.y, to.x, to.y);
-        if (activeTool === "eraser") {
-            const radius = size / 2;
-
-            context.save();
-            context.globalCompositeOperation = "destination-out";
-            context.fillStyle = "#000000";
-
-            points.forEach(({ x, y }) => {
-                context.beginPath();
-                context.arc(x + 0.5, y + 0.5, radius, 0, Math.PI * 2);
-                context.fill();
-            });
-
-            context.restore();
-        } else {
-            context.fillStyle = colorPicker.value;
-            points.forEach(({ x, y }) =>
-                context.fillRect(x - offset, y - offset, size, size),
-            );
-        }
-        render();
-    }
-
-    function pickColor(point) {
-        const composite = EditorRenderer.createCompositeCanvas(model);
-        const context = composite.getContext("2d", { willReadFrequently: true });
-        const pixel = context.getImageData(point.x, point.y, 1, 1).data;
-        if (pixel[3] === 0) return;
-        const hex = `#${Array.from(pixel.slice(0, 3), (part) => part.toString(16).padStart(2, "0")).join("")}`;
-        colorPicker.value = hex;
-        document.getElementById("color-value").textContent = hex.toUpperCase();
-        setTool("brush");
-    }
-
-    canvas.addEventListener("pointerdown", (event) => {
-        if (event.button !== 0) return;
-        const point = getCanvasPoint(event);
-        if (!point) return;
-        event.preventDefault();
-        if (activeTool === "eyedropper") {
-            pickColor(point);
-            return;
-        }
-        isDrawing = true;
-        activePointerId = event.pointerId;
-        previousPoint = point;
-        canvas.setPointerCapture(event.pointerId);
-        paintSegment(point, point);
+      if (event.key === 'Escape') {
+        finishRename(false);
+      }
     });
 
-    canvas.addEventListener("pointermove", (event) => {
-        updateBrushCursor(event);
-        if (!isDrawing || event.pointerId !== activePointerId) return;
-        const point = getCanvasPoint(event);
-        if (!point) {
-            previousPoint = null;
-            return;
-        }
-        if (previousPoint) paintSegment(previousPoint, point);
-        previousPoint = point;
+    input.addEventListener('blur', () => {
+      finishRename(true);
     });
+  });
 
-    function stopDrawing(event) {
-        if (
-            event &&
-            activePointerId !== null &&
-            event.pointerId !== activePointerId
-        )
-            return;
-        isDrawing = false;
-        activePointerId = null;
-        previousPoint = null;
-    }
-
-    canvas.addEventListener("pointerenter", updateBrushCursor);
-
-    canvas.addEventListener("pointerleave", () => {
-        if (!isDrawing) {
-            brushCursor.hidden = true;
-        }
-    });
-    canvas.addEventListener("pointerup", stopDrawing);
-    canvas.addEventListener("pointercancel", stopDrawing);
-    canvas.addEventListener("lostpointercapture", stopDrawing);
-
-    document.querySelectorAll("[data-tool]").forEach((button) => {
-        button.addEventListener("click", () => setTool(button.dataset.tool));
-    });
-
-    colorPicker.addEventListener("input", () => {
-        document.getElementById("color-value").textContent =
-            colorPicker.value.toUpperCase();
-    });
-
-    document.getElementById("brush-size").addEventListener("input", (event) => {
-        brushSize = Number(event.target.value);
-        document.getElementById("brush-size-value").textContent = `${brushSize} px`;
-        if (activeTool === "eraser" && lastPointerEvent) {
-            updateBrushCursor(lastPointerEvent);
-        }
-    });
-
+  function renderSelectedLayerProperties() {
+    const layer = model.selectedLayer;
+    if (!layer) return;
+    document.getElementById('selected-layer-name').textContent = layer.name;
     filterControls.forEach((control) => {
-        control.addEventListener("input", () => {
-            const property = control.dataset.filter;
-            model.setLayerProperty(
-                model.selectedLayerId,
-                property,
-                Number(control.value),
-            );
-            document.getElementById(`${property}-value`).textContent =
-                `${control.value}%`;
-            render();
-        });
+      const property = control.dataset.filter;
+      control.value = layer[property];
+      document.getElementById(`${property}-value`).textContent = `${layer[property]}%`;
     });
+    document.getElementById('delete-layer-button').disabled = model.layers.length <= 1;
+  }
 
-    document.getElementById("add-layer-button").addEventListener("click", () => {
-        model.addLayer();
-        render();
+  function setTool(tool) {
+    activeTool = tool;
+    document.querySelectorAll('[data-tool]').forEach((button) => {
+      const selected = button.dataset.tool === tool;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-pressed', String(selected));
     });
+    canvas.classList.toggle('tool-eyedropper', tool === 'eyedropper');
+    canvas.classList.toggle('tool-eraser', tool === 'eraser');
+    brushCursor.hidden = tool !== 'eraser';
+    if (tool === 'eraser' && lastPointerEvent) {
+      updateBrushCursor(lastPointerEvent);
+    }
+    document.getElementById('active-tool-status').textContent = `Ferramenta: ${toolNames[tool]}`;
+  }
 
-    document
-        .getElementById("delete-layer-button")
-        .addEventListener("click", () => {
-            const layer = model.selectedLayer;
-            if (
-                layer &&
-                model.layers.length > 1 &&
-                window.confirm(`Excluir a camada “${layer.name}”?`)
-            ) {
-                model.removeLayer(layer.id);
-                render();
-            }
-        });
+  function getCanvasPoint(event) {
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    const x = Math.floor(((event.clientX - rect.left) * model.width) / rect.width);
+    const y = Math.floor(((event.clientY - rect.top) * model.height) / rect.height);
+    if (x < 0 || y < 0 || x >= model.width || y >= model.height) return null;
+    return { x, y };
+  }
 
+  function updateBrushCursor(event) {
+    lastPointerEvent = event;
+    if (activeTool !== 'eraser') return;
 
-    const newCanvasButton = document.getElementById("new-canvas-button");
+    const rect = canvas.getBoundingClientRect();
 
-    const newCanvasDialog = document.getElementById("new-canvas-dialog");
+    if (!rect.width || !rect.height) return;
 
-    const newCanvasForm = document.getElementById("new-canvas-form");
+    const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
 
-    const newCanvasWidth = document.getElementById("new-canvas-width");
+    if (!inside) {
+      brushCursor.hidden = true;
+      return;
+    }
 
-    const newCanvasHeight = document.getElementById("new-canvas-height");
+    // Converte o tamanho da borracha em pixels visuais da tela.
+    const diameter = (brushSize * rect.width) / model.width;
 
-    const newCanvasError = document.getElementById("new-canvas-error");
+    // Evita que o círculo fique pequeno demais para ser visualizado.
+    const visualDiameter = Math.max(4, diameter);
 
+    brushCursor.style.width = `${visualDiameter}px`;
+    brushCursor.style.height = `${visualDiameter}px`;
 
-    // Abrir a janela de criação
-    newCanvasButton.addEventListener("click", () => {
+    // Posiciona o círculo exatamente abaixo do ponteiro.
+    brushCursor.style.left = `${event.clientX - rect.left}px`;
+    brushCursor.style.top = `${event.clientY - rect.top}px`;
 
-        // Utiliza as dimensões atuais como valores iniciais
-        newCanvasWidth.value = model.width;
-        newCanvasHeight.value = model.height;
+    brushCursor.hidden = false;
+  }
 
-        newCanvasError.textContent = "";
+  function paintSegment(from, to) {
+    const layer = model.selectedLayer;
+    if (!layer) return;
+    const context = layer.canvas.getContext('2d');
+    const size = activeTool === 'brush' || activeTool === 'eraser' ? brushSize : 1;
+    const offset = Math.floor((size - 1) / 2);
+    const points = EditorPixelLine.getLinePoints(from.x, from.y, to.x, to.y);
+    if (activeTool === 'eraser') {
+      const radius = size / 2;
 
-        newCanvasDialog.showModal();
+      context.save();
+      context.globalCompositeOperation = 'destination-out';
+      context.fillStyle = '#000000';
 
-        newCanvasWidth.focus();
+      points.forEach(({ x, y }) => {
+        context.beginPath();
+        context.arc(x + 0.5, y + 0.5, radius, 0, Math.PI * 2);
+        context.fill();
+      });
 
+      context.restore();
+    } else {
+      context.fillStyle = colorPicker.value;
+      points.forEach(({ x, y }) => context.fillRect(x - offset, y - offset, size, size));
+    }
+    render();
+  }
+
+  function pickColor(point) {
+    const composite = EditorRenderer.createCompositeCanvas(model);
+    const context = composite.getContext('2d', { willReadFrequently: true });
+    const pixel = context.getImageData(point.x, point.y, 1, 1).data;
+    if (pixel[3] === 0) return;
+    const hex = `#${Array.from(pixel.slice(0, 3), (part) => part.toString(16).padStart(2, '0')).join('')}`;
+    colorPicker.value = hex;
+    document.getElementById('color-value').textContent = hex.toUpperCase();
+    setTool('brush');
+  }
+
+  canvas.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+    const point = getCanvasPoint(event);
+    if (!point) return;
+    event.preventDefault();
+    if (activeTool === 'eyedropper') {
+      pickColor(point);
+      return;
+    }
+    isDrawing = true;
+    activePointerId = event.pointerId;
+    previousPoint = point;
+    canvas.setPointerCapture(event.pointerId);
+    paintSegment(point, point);
+  });
+
+  canvas.addEventListener('pointermove', (event) => {
+    updateBrushCursor(event);
+    if (!isDrawing || event.pointerId !== activePointerId) return;
+    const point = getCanvasPoint(event);
+    if (!point) {
+      previousPoint = null;
+      return;
+    }
+    if (previousPoint) paintSegment(previousPoint, point);
+    previousPoint = point;
+  });
+
+  function stopDrawing(event) {
+    if (event && activePointerId !== null && event.pointerId !== activePointerId) return;
+    isDrawing = false;
+    activePointerId = null;
+    previousPoint = null;
+  }
+
+  canvas.addEventListener('pointerenter', updateBrushCursor);
+
+  canvas.addEventListener('pointerleave', () => {
+    if (!isDrawing) {
+      brushCursor.hidden = true;
+    }
+  });
+  canvas.addEventListener('pointerup', stopDrawing);
+  canvas.addEventListener('pointercancel', stopDrawing);
+  canvas.addEventListener('lostpointercapture', stopDrawing);
+
+  document.querySelectorAll('[data-tool]').forEach((button) => {
+    button.addEventListener('click', () => setTool(button.dataset.tool));
+  });
+
+  colorPicker.addEventListener('input', () => {
+    document.getElementById('color-value').textContent = colorPicker.value.toUpperCase();
+  });
+
+  document.getElementById('brush-size').addEventListener('input', (event) => {
+    brushSize = Number(event.target.value);
+    document.getElementById('brush-size-value').textContent = `${brushSize} px`;
+    if (activeTool === 'eraser' && lastPointerEvent) {
+      updateBrushCursor(lastPointerEvent);
+    }
+  });
+
+  filterControls.forEach((control) => {
+    control.addEventListener('input', () => {
+      const property = control.dataset.filter;
+      model.setLayerProperty(model.selectedLayerId, property, Number(control.value));
+      document.getElementById(`${property}-value`).textContent = `${control.value}%`;
+      render();
     });
+  });
 
+  document.getElementById('add-layer-button').addEventListener('click', () => {
+    model.addLayer();
+    render();
+  });
 
-    // Cancelar a criação
-    document.getElementById("cancel-new-canvas").addEventListener("click", () => {
+  document.getElementById('delete-layer-button').addEventListener('click', () => {
+    const layer = model.selectedLayer;
+    if (layer && model.layers.length > 1 && window.confirm(`Excluir a camada “${layer.name}”?`)) {
+      model.removeLayer(layer.id);
+      render();
+    }
+  });
 
-        newCanvasDialog.close();
+  const newCanvasButton = document.getElementById('new-canvas-button');
 
-    });
+  const newCanvasDialog = document.getElementById('new-canvas-dialog');
 
+  const newCanvasForm = document.getElementById('new-canvas-form');
 
-    // Criar a nova tela
-    newCanvasForm.addEventListener("submit", (event) => {
+  const newCanvasWidth = document.getElementById('new-canvas-width');
 
-        event.preventDefault();
+  const newCanvasHeight = document.getElementById('new-canvas-height');
 
-        const nextWidth = Number(newCanvasWidth.value);
-        const nextHeight = Number(newCanvasHeight.value);
+  const newCanvasError = document.getElementById('new-canvas-error');
 
-        // Validar as dimensões
-        if (
-            !Number.isInteger(nextWidth) ||
-            !Number.isInteger(nextHeight) ||
-            nextWidth < 1 ||
-            nextHeight < 1 ||
-            nextWidth > 8192 ||
-            nextHeight > 8192
-        ) {
+  // Abrir a janela de criação
+  newCanvasButton.addEventListener('click', () => {
+    // Utiliza as dimensões atuais como valores iniciais
+    newCanvasWidth.value = model.width;
+    newCanvasHeight.value = model.height;
 
-            newCanvasError.textContent =
-                "Informe dimensões inteiras entre 1 e 8192 pixels.";
+    newCanvasError.textContent = '';
 
-            return;
+    newCanvasDialog.showModal();
 
-        }
+    newCanvasWidth.focus();
+  });
 
-        // Criar o novo documento
-        model.reset(nextWidth, nextHeight);
+  // Cancelar a criação
+  document.getElementById('cancel-new-canvas').addEventListener('click', () => {
+    newCanvasDialog.close();
+  });
 
-        // Atualizar a tela e os componentes
-        isDrawing = false;
-        activePointerId = null;
-        previousPoint = null;
-        lastPointerEvent = null;
+  // Criar a nova tela
+  newCanvasForm.addEventListener('submit', (event) => {
+    event.preventDefault();
 
-        brushCursor.hidden = true;
+    const nextWidth = Number(newCanvasWidth.value);
+    const nextHeight = Number(newCanvasHeight.value);
 
-        updateCanvasDimensions();
+    // Validar as dimensões
+    if (!Number.isInteger(nextWidth) || !Number.isInteger(nextHeight) || nextWidth < 1 || nextHeight < 1 || nextWidth > 8192 || nextHeight > 8192) {
+      newCanvasError.textContent = 'Informe dimensões inteiras entre 1 e 8192 pixels.';
 
-        render();
+      return;
+    }
 
-        // Fechar a janela
-        newCanvasDialog.close();
+    // Criar o novo documento
+    model.reset(nextWidth, nextHeight);
 
-    });
+    // Atualizar a tela e os componentes
+    isDrawing = false;
+    activePointerId = null;
+    previousPoint = null;
+    lastPointerEvent = null;
 
-
-    document
-        .getElementById("import-image-button")
-        .addEventListener("click", () => fileInput.click());
-    fileInput.addEventListener("change", async () => {
-        const file = fileInput.files && fileInput.files[0];
-        if (!file) return;
-        try {
-            await EditorImageIO.importImageAsLayer(model, file);
-            render();
-        } catch (error) {
-            window.alert(error.message || "Não foi possível importar a imagem.");
-        } finally {
-            fileInput.value = "";
-        }
-    });
-
-    document
-        .getElementById("export-button")
-        .addEventListener("click", async () => {
-            try {
-                const composite = EditorRenderer.createCompositeCanvas(model);
-                await EditorImageIO.exportCanvasAsPng(composite, "editor-grafico.png");
-            } catch (error) {
-                window.alert(error.message || "Não foi possível exportar o PNG.");
-            }
-        });
-
-    document.addEventListener("keydown", (event) => {
-        if (event.ctrlKey || event.metaKey || event.altKey) return;
-        const target = event.target;
-        if (target && target.matches("input, textarea, select, button")) return;
-        const shortcuts = { b: "brush", i: "eyedropper", e: "eraser" };
-        const tool = shortcuts[event.key.toLowerCase()];
-        if (tool) setTool(tool);
-    });
+    brushCursor.hidden = true;
 
     updateCanvasDimensions();
+
     render();
-    console.log("Editor Gráfico 2D iniciado.");
+
+    // Fechar a janela
+    newCanvasDialog.close();
+  });
+
+  document.getElementById('import-image-button').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    try {
+      await EditorImageIO.importImageAsLayer(model, file);
+      render();
+    } catch (error) {
+      window.alert(error.message || 'Não foi possível importar a imagem.');
+    } finally {
+      fileInput.value = '';
+    }
+  });
+
+  document.getElementById('export-button').addEventListener('click', async () => {
+    try {
+      const composite = EditorRenderer.createCompositeCanvas(model);
+      await EditorImageIO.exportCanvasAsPng(composite, 'editor-grafico.png');
+    } catch (error) {
+      window.alert(error.message || 'Não foi possível exportar o PNG.');
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target;
+    if (target && target.matches('input, textarea, select, button')) return;
+    const shortcuts = { b: 'brush', i: 'eyedropper', e: 'eraser' };
+    const tool = shortcuts[event.key.toLowerCase()];
+    if (tool) setTool(tool);
+  });
+
+  updateCanvasDimensions();
+  render();
+  console.log('Editor Gráfico 2D iniciado.');
 })();
