@@ -631,3 +631,28 @@ input:focus-visible,
   background: inherit;
   color: inherit;
 }
+
+#brush-shape {
+  margin-top: 10px;
+  width: 100%;
+  padding: 7px 1px;
+  /* border: 1px solid var(--border-color); */
+  border-radius: 6px;
+  /* background: var(--panel-background); */
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Opções do select */
+#brush-shape option {
+  background-color: #1e293b;
+  color: #ffffff;
+  padding: 10px;
+}
+
+/* Opção quando selecionada (suporte limitado) */
+#brush-shape option:checked {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
