@@ -656,3 +656,27 @@ input:focus-visible,
   background-color: #3b82f6;
   color: #ffffff;
 }
+
+#filter-preset {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--panel-background);
+  color: #f1f1f1;
+  font: inherit;
+  cursor: pointer;
+
+  /* Solicita controles nativos em tema escuro */
+  color-scheme: dark;
+}
+
+#filter-preset option {
+  background-color: #2b2d31;
+  color: #f1f1f1;
+}
+
+#filter-preset option:checked {
+  background-color: #3b82f6;
+  color: #ffffff;
+}

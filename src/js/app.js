@@ -16,6 +16,8 @@
 
   const filterControls = Array.from(document.querySelectorAll('[data-filter]'));
 
+  const filterPresetControl = document.getElementById('filter-preset');
+
   const toolNames = {
     brush: 'Desenhar',
 
@@ -220,6 +222,8 @@
     if (!layer) return;
 
     document.getElementById('selected-layer-name').textContent = layer.name;
+
+    filterPresetControl.value = layer.filterPreset || 'original';
 
     filterControls.forEach((control) => {
       const property = control.dataset.filter;
@@ -479,6 +483,16 @@
 
       render();
     });
+  });
+
+  filterPresetControl.addEventListener('change', (event) => {
+    const layer = model.selectedLayer;
+
+    if (!layer) return;
+
+    model.setLayerProperty(layer.id, 'filterPreset', event.target.value);
+
+    render();
   });
 
   document.getElementById('add-layer-button').addEventListener('click', () => {

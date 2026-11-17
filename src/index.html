@@ -101,6 +101,16 @@
           </div>
           <p id="selected-layer-name" class="selected-layer-name">Camada 1</p>
           <div class="filter-control">
+            <label for="filter-preset">Filtro predefinido</label>
+
+            <select id="filter-preset">
+              <option value="original">Original</option>
+              <option value="grayscale">Preto e branco</option>
+              <option value="sepia">Sépia</option>
+              <option value="cold">Frio</option>
+            </select>
+          </div>
+          <div class="filter-control">
             <label for="opacity-filter">Opacidade <output id="opacity-value">100%</output></label>
             <input id="opacity-filter" data-filter="opacity" type="range" min="0" max="100" value="100" />
           </div>
